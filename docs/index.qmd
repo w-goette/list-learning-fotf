@@ -53,6 +53,7 @@ title-block-banner: true
 title-block-categories: true
 format: 
   html:
+    embed-resources: true
     self-contained: true
     self-contained-math: true
     toc: true
