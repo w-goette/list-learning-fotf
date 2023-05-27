@@ -1,0 +1,525 @@
+---
+title: "Supplementary Materials"
+bibliography: references.bib
+csl: apa.csl
+description: | 
+  Additional documentation for the manuscript: "Measuring Episodic Verbal Learning Ability in Alcohol-Related Cognitive Disorders in Relation to Everyday Functioning".
+date: 05/15/2023
+author:
+  - name: Wellem S. Eikelboom
+    affiliations:
+      - id: VVGI
+        name: Vincent van Gogh Institute for Psychiatry
+        department: Centre of Excellence for Korsakoff and Alcohol-Related Cognitive Disorders
+        city: Venray
+        region: Limburg
+        country: The Netherlands
+  - name: William Goette
+    affiliations: 
+      - id: CLP
+        name: University of Texas Southwestern Medical Center
+        department: Department of Pscyhiatry
+        city: Dallas
+        state: Texas
+        country: United States of America
+  - name: Yvonne C. M. Rensen
+    affiliations:
+      - ref: VVGI
+  - name: Jurriaan van Nuland
+    affiliations:
+      - ref: VVGI
+      - id: TAC
+        name: Tactus Addiction Care
+        city: Deventer
+        region: Overijssel
+        country: The Netherlands
+  - name: Gwenny T. L. Janssen
+    affiliations:
+      - ref: VVGI
+  - name: Roy P. C. Kessels
+    affiliations:
+      - ref: VVGI
+      - ref: TAC
+      - name: Radbound University
+        department: Donders Institute for Brain, Cognition, and Behaviour
+        city: Nijmegen
+        region: Gelderland
+        country: The Netherlands
+abstract: |
+      In the corresponding study, we presented generalized non-linear mixed models for understanding CVLT learning curves. The supplementary details provided here provide additional documentation on the modeling process and additional figures for understanding the implications of the model. The supplemental materials provided should not be taken as comprehensive of the methods and results of the manuscript to the corresponding study; instead, these are provided for transparency and for readers with questions regarding possible factors that could have impacted the results.
+citation:
+  type: document
+title-block-banner: true
+title-block-categories: true
+format: 
+  html:
+    self-contained: true
+    toc: true
+    number-sections: true
+    smooth-scroll: true
+    reference-location: margin
+    citation-location: document
+    link-external-icon: true
+    link-external-newwindow: true
+    code-fold: show
+    code-tools: true
+    code-summary: "Reveal the code"
+    code-overflow: scroll
+    code-block-border-left: true
+    theme: 
+      light: flatly
+      dark: darkly
+    mainfont: "Lato"
+fig-cap-location: top
+tbl-cap-location: top
+knitr:
+  opts_chunk: 
+    R.options:
+      knitr.graphics.auto_pdf: true
+comments:
+  hypothesis: true
+execute: 
+  echo: false
+  warning: false
+editor: visual
+---
+
+```{r}
+#read in data
+load(".RData")
+
+#load libraries
+library(tidyverse)
+library(tidybayes)
+library(ggdist)
+library(cmdstanr)
+library(posterior)
+library(easystats)
+library(bayesplot)
+library(patchwork)
+library(knitr)
+library(kableExtra)
+library(bayestestR)
+library(brms)
+```
+
+## Explanation of the Learning Model
+
+The study utilizes a first-order transfer function for the fitting of the learning performances on the CVLT. This model was described first by Igor Stepanov through various learning studies conducted in the 1980s and 1990s, but this work was published primarily in Russian journals and thus not widely known [@Stepanov2005]. @Stepanov2005 demonstrated that this model generalized across a range of memorization settings including food aversion learning in snails, maze learning in rats, conditioned eye blinking in humans, and memorization of word, digits, and images across the developmental span of humans. The regression-based modeling approach of this first-order transfer system function was elaborated in @Stepanov2008. Of perhaps greater clinical interest, however, is the fact that the model has been applied to both the CVLT-II [@Stepanov2010] and CVLT-C [@Stepanov2011].
+
+The first-order transfer system function is a mathematical model representing the reaction to step-wise input. The equation is represented via an exponential function that is closely related to several other common learning models that emerged in the research on equations for classical conditioning [see @Stepanov2008 for review]. The equation is represented as shown below:
+
+$$y_{x} = y_{0}e^{-\alpha(x - 1)} + y_{\infty}(1 - e^{-\alpha(x - 1)})$$
+
+Note that the notation used here is different than used in the related work by Stepanov and colleagues [@Stepanov2005; @Stepanov2008; @Stepanov2010; @Stepanov2011]. The departure from their notation is used for transparency because the coefficient as written above telegraph more clearly their interpretative meaning. The equation predicts the learning outcome, $y$, of the current trial, $x = 1, 2, 3, \dots$ given information about the preceding trial, $x-1$. The parameters used to make this prediction include $y_0$, $y_\infty$, and $\alpha$ that correspond to the readiness to learn, the maximal learning potential, and the learning rate, respectively. To illustrate the functional interpretation of these parameters, one can consider what happens at the first learning trial, $x = 1$, and then what would happen if the learning task was given an infinite number of times, $x = \infty$.
+
+For those readers less familiar with the behavior of exponents, it is useful to know that $x^0 = 1$ and $x^{-\infty} = 0$. The former fact simply states that any number raised to the power of zero will always be one. The latter fact may initially seem counter intuitive as it implies that any value raised to a large negative power will converge to zero. One way that this fact can be demystified somewhat is by noting that a number is inverted when raised to a negative power. Written out, this means that $x^{-1} = \frac{1}{x}$, and more generally, this can be written as $x^{-b} = \frac{1}{x^b}$. When written this way, it is perhaps easier to see why zero is the lower bound to negative exponents of increasing value since the exponent is simply causing a larger and larger denominator. With this in mind, we can now consider the behavior of the learning equation on the first trial as shown here:
+
+$$y_{1} = y_{0}e^{-\alpha(1 - 1)} + y_{\infty}(1 - e^{-\alpha(1 - 1)})$$ $$y_{1} = y_{0}e^{-\alpha \cdot 0} + y_{\infty}(1 - e^{-\alpha \cdot 0})$$ $$y_{1} = y_{0}e^0 + y_{\infty}(1 - e^0)$$ $$y_{1} = (y_{0} \cdot 1) + y_{\infty}(1 - 1)$$ $$y_{1} = y_{0} + (y_{\infty} \cdot 0)$$ $$y_{1} = y_{0}$$
+
+The result worked through in these few steps illustrates that the predicted performance on the first trial is the same as the value estimated for the $y_{0}$ parameter. It is important to note that, even though the equation implies $y_1 = y_0$, the subscripts are intentionally mismatched to reflect that the parameter, $y_0$, is more general than just the first trial performance on a test but is instead the overall readiness or ability to learn when presented with information (i.e., a kind of general memory for a zero-th trial). From a cognitive standpoint, this parameter has a useful relationship to working memory as it is, in effect, the span of information that may be stored and manipulated before associative learning and encoding occurs.
+
+To understand the implication of the $y_{\infty}$ parameter, one can consider the prediction that the equation would give for the 11th learning trial that someone may give. So as not to repeat the steps to solving the equation as before, we can first see what exponent part of the equation becomes when $x = 11$ while ignoring the learning rate parameter, $\alpha$ for now: $e^{-(11-1)} = e^{-10} \approx 0.00005$. Given how small this value is, for simplicity, we can treat it as zero for the demonstration. So, if the $e^{-\alpha(x - 1)}$ elements of the equation are replaced with zero, then the equation reduces as follows:
+
+$$y_{11} = (y_{0} \cdot 0) + y_{\infty}(1 - 0)$$ $$y_{11} = y_{\infty} \cdot 1$$ $$y_{11} = y_{\infty}$$
+
+As with the previous example, the separation of the subscripts is intentional to emphasize that there is a difference between the predicted performance, $y_{11}$, and the maximal learning parameter, $y_{\infty}$, even though the two converge as the number of trials increases. While it is implausible to repeat some kind of learning test an infinite number of times, the parameter itself is usefully interpreted as the total amount of information that can be obtained before complete saturation of the associative system.
+
+### Statistical Estimation of the Model
+
+Previous applications of the first-order transfer function to list learning tests have fit the model as a non-linear Gaussian regression [e.g., @Stepanov2010; @Stepanov2011]. This model can be stated in terms of sampling statements as follows:
+
+$$\mu_{jx} = y_{0j}e^{-\alpha_{j}(x - 1)} + y_{{\infty}j}(1 - e^{-\alpha_{j}(x-1)})$$ $$\hat{y}_{jx} \sim N(\mu_{jx}, \sigma_{\hat{y}j})$$
+
+In this model, the expectation for an individual, $j$, on a trial, $x$, is obtained from their own equation, meaning that each individual has their own parameters to describe their learning performance: $y_{0j}$, $y_{{\infty}j}$, and $\alpha_{j}$. The predicted performance, $\hat{y}_{jx}$, is then assumed to be normally distributed around this point estimate with a particular standard error, $\sigma_{\hat{y}j}$.
+
+In the case of the CVLT, each individual is observed over 5 trials, meaning that the dependency between observations should be addressed so as to not violate the statistical assumption of independence. In this case, when each individual is fit to their own learning curve, the equation itself accommodates the dependency in the autocorrelation of independent variable in which performance on trial $x$ is predicted from performance on trial $x-1$.
+
+Since each individual has their own fitted curve in this estimation framework, it is also possible to calculate the $R^2$ for each person's model. The coefficient of alienation is simply the ratio of residual variance to total variance in the outcome, so one minus this ratio gives the proportion of the total variance attributable to the modeled effects (i.e., not residual variance), which is the familiar $R^2$ statistic. Thus, a simple calculation of $R^2$ at an individual level is given as follows:
+
+$$R^2_j = 1 - \frac{\sum_x^n(y_{jx} - \hat{y}_{jx})^2}{\sum_x^n(y_{jx} - \bar{y}_j)^2}$$
+
+While a useful metric to compute for each individual person who is administered a learning test, the clinical value of the $R^2$ is not exactly clear. For example, consider the case where the $R^2$ is low. The clinician would conclude that the memory performance of the individual is not consistent with or well-explained by the model, but there is not an obvious alternative implication to this. If not this model, then which model is best for the person's learning curve? How does a clinician go about finding these other models? What would these other models tell the clinician about the memory/learning pattern observed from a client?
+
+Now, consider the case of a high $R^2$, which would initially seem to be a favorable outcome. The problem with such an outcome, however, is that it implies that there was nothing really learned from the model in the first place. Recall that $\hat{y}_1 = y_0$ and that $\hat{y}_5$ will approach $y_\infty$. Because both $y_jx$ and $\hat{y}_j$ are simply products of the observed data, they are fixed values and the denominator of the $R^2$ equation is therefore fully defined by the data. This means that the only place for changing or adjusting the $R^2$ comes from the numerator, and even then, the only value that is estimated by the statistical model is $\hat{y}_{jx}$. Using this information, a high $R^2$ implies that the predicted values were all nearly identical to the observed values on each trial, but this is partially implied by the way that the model is defined in the first place. For example, @Stepanov2010 report a correlation of $r = 0.999$ between the $y_0$ parameter and raw score on Trial 1 of the CVLT. This result indicates that essentially all of the predictive error that would impact $R^2$ must come from discrepancies between predicted and observed scores on Trials 2 through 5, which is not a particularly large number of trials under which to adequately sample variability.
+
+This question of adequacy in variability sampling ultimately raises the issue of degrees of freedom when a single client's test performance is fit to this model. There are a total of 5 observed data points for a single client's CVLT performance, and the model being fit to these data contains 3 unknown parameters in the equation. As a result, there are just 2 degrees of freedom in the model estimation, which increases the concern that one may have for overfitting the model to the data. One option to evaluate this risk would be to use the adjusted $R^2$ estimate with the correction factor $1 - \frac{R^2 (n - 1)}{n - p - 1}$, which will always reduce to $\frac{5 - 1}{5 - 3 - 1} = \frac{4}{1} = 4$.
+
+Another option is the predicted $R^2$ wherein the model is iteratively fit dropping one data point at a time. The model results obtained from each fit on the reduced sample are then used to predict the data point that was removed. The predicted $R^2$ is then computed using the discrepancies between the reduced-model predicted observations instead of the full-model predictions. Using the participant data provided in @Stepanov2010, the $R^2$ for participant number 24 (ID = 4068) was 0.930 (Table 1, p. 447), but the predicted $R^2$ calculated from these data is reduced to 0.846. While this single example suggests that one need not be overly concerned with the risk of overfit since this predicted $R^2$ is still quite positive, there will be exceptions to this pattern, and there are not direct clinical implications for what to do in such a case. For example, consider the case of participants 26 (ID = 4133) and 29 (ID = 4208). These participant's have reported $R^2$ values of 0.883 and 0.491, respectively [@Stepanov2010, p. 447], but when their predicted $R^2$ values are 0.545 and -0.005, respectively. Where the $R^2$ value of 0.883 was among the weaker value reported in the study, this is still what would be considered a strong indicator of overall model fit, but the reduction to 0.545 when considering the predictive $R^2$ could carry significant implications for reassessment and the tracking of change in this individual over time. Similarly, the $R^2$ of 0.491 is not an unimpressive result, though in comparison to the other values reported in Table 1 of the @Stepanov2010 study it is certainly a smaller effect; however, the predicted $R^2$ for this particular participant's model becomes negative, which indicates that using the mean performance across trials would be as good as or better than the model to make predictions for unobserved trials or performances.
+
+### Learning as a Generalized Non-Linear Multilevel Baysian Model
+
+Based on the section above, there are a few things that would be desirable improvements from the existing applications of the first-order transfer function. Namely, there would be a way of estimating the overall model for a sample rather than on each individual as this reduces the risks and dangers associated with overfitting by incorporating more data for the model to learn from. Additionally, when the model is fit in the context of a sample, the values that it estimates can be interpreted in the context of a population, which makes understanding fit and misfit more intuitive as the sample-based estimation permits a relative comparison of performance versus the person-based estimation that amounts to a description of a single test performance. The model could also be made more useful if there was a way of informing clinical judgement and decision-making whenever an individual shows poor fit to the model.
+
+One point that was not addressed in the previous section but is relevant here is the value of a generalized non-linear equation versus a Gaussian non-linear equation. Though there may be applications for experimental and cognitive psychology to a Gaussian model, there is not much clinical utility to the predictions that are permitted. First, the Gaussian (or normal) distribution is a continuous distribution. This means that the model can predict that someone will recall negative words, and it means that most predictions are fractional responses in some way (e.g., a prediction that someone will recall 8.74313... words on Trial 1). Likewise, the model could predict that someone will recall more than the possible 16 words on the CVLT, which is again not clinically useful. A generalized non-linear equation, however, imposes more clinically relevant boundaries by attempting to characterize the data generation process itself.
+
+Briefly, the data generation process is a critical concept in model-based statistical methods where the emphasis is on constructing models that explain why the data are what they are (with inference and description of the data being a fortunate by-product of this process). This is in contrast to standard inferential statistics that are typically selected based on constraints of the data collection process (e.g., a t-test is used because there are two groups which were measured on a continuous variable). By constructing a model around the data generation process, the intent is to create a statistical framework that is informed by theory about how and why the data look the way they do when collected so that the model is able to predict new datasets that share the same features and qualities as those observed in the sample.
+
+To illustrate the process somewhat, one can consider just the likelihood function used to describe the data. The likelihood function is a probability density function that helps to characterize the most probable (or maximally likely) values for the parameters given the data that were observed. The normal likelihood function thus would be useful for trying to obtain the most likely values for the population mean and standard deviation given the mean and standard deviation of the variable in the sample. Normal distributions arise when there is a population-level central tendency around which the data cluster but each individual observation is affected by random, additive sources of variance away from that central tendency value. Since this error is random, the positive and negative deviations that individual observations acquire tend to cancel out and bring one closer to that central tendency, which results in the normal distribution's characteristic central concentration. Much more rarely, an individual observation may experience considerable positive or negative deviations by chance, which gives the normal distribution its light tails. On the CVLT, the data generation process implied by a normal likelihood would be that there is a population-level average performance on each trial (which is a reasonable starting assumption) and then each individual's performance on each trial is affected by random error that causes them to deviate to some degree from that average (again, not a particularly poor assumption). Where the normal likelihood breaks down is in its support over all real numbers as it is impossible for an individual to obtain a negative number of words recalled, yet the normal likelihood gives some probability to this occurring. Similarly, it makes no sense to predict that someone will recall some fraction of a word or that sources of variance additively combine to nudge this fraction of a word recalled in some positive or negative direction.
+
+An alternative likelihood function that is more intuitively connected to the data generation process is the binomial probability function. The binomial distribution arises when there are a certain number of trials given and one is counting the number of successes that occur in those trials. The binomial distribution is a generalization of the Bernoulli distribution that describes the probability of a success or failure for a single dichotomous outcome, so where the probability of a coin landing on heads can be described with a Bernoulli likelihood, the probability of having 4 heads in 10 coin flips is described by a binomial distribution. The binomial distribution is bounded on the lower end by zero, meaning that there is no probability at all assigned to having "negative" successes, and the distribution is bounded on the upper end by the number of trails so that the predicted number of successes can never be greater than the number of attempts someone takes. Additionally, the binomial distribution is a mass function, not a density function, so it only supports integer values. These conditions make it such that the binomial likelihood gives clinicians only sensible predictions that are whole numbers and always somewhere between getting no item correct and getting all items correct. On the CVLT, the trials that we need to model are the 16 words read during each of the 5 learning trials, and the successes are the number of words correctly recalled each time. A technical assumption of the binomial distribution is that the probability of a success is the exact same for all attempts, meaning that its use is building in the assumption that every word on the CVLT is equally likely to be remembered. This assumption, however, is easily loosened with a mixture model in which the likelihood remains a binomial distribution but a beta distribution, which is a continuous distribution bounded by 0 and 1, is used to express that the probabilities of success may vary over some range. By comparing the fit of a binomial and beta-binomial model, it is possible to determine whether the data are over-dispersed (i.e., vary in their probabilities of success).
+
+With these observations out of the way, it is now possible to illustrate the contributions of the accompanying manuscript's modeling approach. In order to fit the model to a sample of participants, the modeling framework needed to extend to a multilevel regression, which is also sometimes called a random regression, mixed effects regression, or variance components model. Multilevel regression is chosen intentionally for this modeling framework as it is the most descriptive of the kind of modeling problem that the statistics must address in this use case. Multilevel models indicate that there is observed data at more than one level, or framed slightly differently, the observations are nested in at least one other clustering or grouping variable. For the CVLT data, there are the observed data at the level of the five learning trials (level 1) and each of these observations are nested within participants (level 2). In practice, the multilevel regression fit for this study is a longitudinal regression and also therefore equivalent to an appropriately specified latent growth model. As with the application of the equation to individual participant data, the time component and its corresponding autocorrelation is built into the model's equation, so what the model must learn is the values of the parameters that dictate the learning curve. Unlike the model fit to individual participant data, however, the multilevel model is estimating these parameters with the complete sample in order to estimate a population-level fixed effect that can be interpreted as an average value for the parameters. Each individual in the sample is then permitted to deviate by some amount from this average value through the inclusion of random intercepts.
+
+This model specification results in partial pooling of estimates [@Gelman2013, @McElreath2020], which reflects the belief that there is individual variability sufficient to preclude there being a single fixed value for each parameter (complete pooling) but also sufficient similarity that it is not necessary to model parameters specific to each individual (no pooling). There are many advantages to partially pooled models [see @McElreath2020 for a good introduction], but in this context, it is valuable to note that these models induce hierarchical shrinkage. @Stepanov2010 provides a series of secondary analyses in their applications of the non-pooled estimates obtained from the first-order transfer function to explore possible outliers and extreme responses. With partial pooling, the model's estimates are automatically drawn in toward the average effects. The amount by which a single person's point estimate for a parameter is pulled toward the mean varies depending on how extreme their data actually was relative to the average. Since the predicted effects in these models draw more extreme values to the typical value observed across the entire sample, this is called a shrinkage effect (the magnitude of extreme effects are "shrunk" toward the average). Such methods provide greater resilience to outliers and reduces the risk of overfitting by always maintaining a more conservative estimate for individual observations.
+
+The modeling done for this study was also fit using Bayesian estimation methods rather than the standard frequentist methods. The Bayesian statistical approach permits a much more intuitive translation of research to clinical practice. To illustrate, consider the various single-case methods for using a *t*-test to determine whether a person's score on a test differs from a reference sample's average score [see @Crawford2012 for a review]. Say that one is interested in determining whether someone's raw score for Trials 1-5 of the CVLT are consistent with the sample of participants reported in this study with alcohol use disorder (AUD) versus alcohol-related cognitive impairment (ARCI). Per Table 1 of our study, the AUD participants, *n* = 43, had an average total score on the CVLT of 52.1 with a standard deviation of 12.0 words. Say that an individual obtained a raw score of 47 words (about half-way between the average for the AUD and ARCI groups in our sample). To determine whether or not this score is consistent with the scores of individuals with AUD, a single-case t-test can be used as follows:
+
+$$t = \frac{x - \bar{x}}{s_x\sqrt{\frac{n + 1}{n}}}$$ $$ t = \frac{47 - 52.1}{12\sqrt{\frac{43 + 1}{43}}}$$ $$t \approx \frac{-5.1}{12.1}$$ $$t \approx -0.42$$
+
+Based on this result, one would conclude that the test score is not significantly different than the test scores that may be observed from other individuals with AUD. The issue with such a result, however, is that it would require that we accept the null hypothesis, which is not an appropriate decision from a null hypothesis significance testing standpoint. Finding a non-significant result means that one has failed to reject the null hypothesis, not accepted or proven the null. In this case, one may ask whether the test performance at least lets us reject that the individual may be thought of as a random observation from the ACRI sample, *n* = 147, which has a mean of 41.6 and standard deviation of 10.8 words recalled over all five trials of the CVLT. Using the same formula as above, the *t*-statistic for an individual with a total score of 47 is *t*(146) = 0.50, which again results in a failure to reject the null hypothesis. At this juncture, there is not statistical evidence to inform whether someone with CVLT Trial 1-5 score of 47 is consistent with what would be expected for someone with AUD versus ACRI. As a final effort, the clinician could at least ask whether or not a score of 47 is statistical different from the raw scores one would expect from someone with Korsakoff's syndrome (KS). Again, using the KS group from our study, *n* = 117, the average number of words recalled is 27.9 with a standard deviation of 9.6 words, so computing the *t*-statistic for our hypothetical individual with 47 words recalled results in a *t*(116) = 1.98, which does at least let us conclude that the obtained score is significantly different from individuals with KS.
+
+This illustration highlights the issue of traditional statistical approaches to providing clinical evidence since the clinical question at hand is often not "what diagnoses are unlikely given this score?" but rather "what diagnoses are most likely given this score?" The former question requires a test of difference to determine whether the score differs from certain diagnostic groups, which is the standard null hypothesis significance testing paradigm. Perhaps there are cases where a clinician is interested in this type of question, though the need to iteratively rule-out possible diagnoses is not a a typical clinical scenario. The latter question requires a test of equivalence, which are possible to specify using frequentist methods. A more flexible framework, however, is the Bayesian statistical estimation where the goal is not to determine the likeliness of observing some set of data if a null hypothesis were true but rather to estimate a posterior distribution that describes the probability of all possible parameter values. The frequentist methods are based on describing the properties of a test statistic's distribution so that one can answer questions like "under the null hypothesis, what is the probability of obtaining a larger *t*-statistic than the one calculated for the current sample?" This framework means that relatively few questions can actually be answered or that questions need to be carefully crafted. With a probability distribution describing the probabilities of various values for the parameters, however, a much wider range of potential questions become answerable, and as such, there is no Bayesian distinction between tests of difference or tests of equivalence as both are obtained from the same model and are simply different questions investigated using the posterior distribution. The simplest demonstration of this quality of the Bayesian framework is the Bayes factor, which is a metric quantifying the amount of evidence supporting one hypothesis (or model) to another.
+
+A relatively simple illustration of the Bayes factor can be shown using the same example used for the single-case *t*-test reviewed earlier. The Bayesian posterior distribution for a normally distributed variable with an unknown mean and standard deviation is a *t*-distribution with *n* - 1 degrees of freedom, a location of $\bar{x}$, and scale of $s_x\sqrt{1 + \frac{1}{n}}$ [derivation of this posterior distribution is provided in @Gelman2013]. This posterior distribution can be fit in R, though it requires a relatively simple rescaling so that location-scale form of the *t*-distribution is examined instead of the base centralized *t*-distribution. A simple helper function can is shown below to permit the estimation of probability density from this posterior:
+
+```{r, echo = TRUE}
+dlst <- function(x, mu, sigma, n) {
+  
+  #rescale desired value
+  z <- ( x - mu ) / ( sigma * sqrt( 1 + ( 1 / n ) ) )
+  
+  #get probability density from t-distribution
+  p <- dt(x = z, df = n - 1, log = FALSE) / ( sigma * sqrt( 1 + (1 / n ) ) )
+  
+  #return probability value
+  return(p)
+  
+}
+```
+
+With these details out of the way, the posterior distribution described above can be used to compute the Bayes factors for the raw score of 47 using the AUD, ARCI, and KS groups like before. The Bayes factor is defined as a ratio of the probabilities for some data conditional on a hypothesis ($\mathcal{H}$) or model ($\mathcal{M}$) as such:
+
+$$BF_{10} = \frac{Pr(X | \mathcal{H}_1)}{Pr(X | \mathcal{H}_0)}\frac{Pr(\mathcal{H}_1)}{Pr(\mathcal{H}_0)}$$ $$BF_{10} = \frac{Pr(X | \mathcal{M}_1)}{Pr(X | \mathcal{M}_0)}\frac{Pr(\mathcal{M}_1)}{Pr(\mathcal{M}_0)}$$
+
+The subscripts for the Bayes factor are irrelevant, though the 10 (or 01 for the inverse) is common to reflect the ratio of the evidence favoring the alternative (1) hypothesis to the null (0) hypothesis. Flipping the ratio of $BF_{10}$ so that the evidence for the data under the null is placed over the evidence for the data under the alternative gives $BF_{01}$, which results in the handy equivalency that $BF_{10}^{-1} = BF_{01}$. The ratio of probabilities under the two competing models can also be scaled according to the relative probability that either model is true, which is clinically equivalent to thinking about base rates in the diagnosis. Since the Bayes factor is simply a ratio, $BF_{10}$ will be one when the data are equally likely under the competing models/hypotheses. As the probability for the data increases in the model corresponding to the numerator of $BF_{10}$, the Bayes factor increases towards infinity. In contrast, when the data are more likely in the model in the denominator, the Bayes factor shrinks closer to zero. As with effect sizes, there are a various interpretations for the strength of evidence suggested by a Bayes factor given its magnitude: 1-3 = weak, 3-20 = positive, 20-150 = strong, and \>150 = very strong.
+
+In order to calculate the Bayes factor, it is necessary to compute the probability of obtaining a score of 47 under each of the diagnoses, and this what the location-scale *t*-distribution function is for. Using this function, the Bayes factors can be computed as follows:
+
+```{r, echo = TRUE}
+
+#compute BF of AUD vs ACRI
+bf_AUDvsACRI <- dlst( x = 47, mu = 52.1, sigma = 12.0, n = 43 )  / dlst( x = 47, mu = 41.6, sigma = 10.8, n = 147 )
+bf_AUDvsACRI
+
+#compute BF of ACRI vs KS
+bf_ACRIvsKS  <- dlst( x = 47, mu = 41.6, sigma = 10.8, n = 147 ) / dlst( x = 47, mu = 27.9, sigma = 9.6, n = 117 )
+bf_ACRIvsKS
+
+#compute BF of AUD vs KS
+bf_AUDvsKS   <- dlst( x = 47, mu = 52.1, sigma = 12.0, n = 43 )  / dlst( x = 47, mu = 27.9, sigma = 9.5, n = 117 )
+bf_AUDvsKS
+
+```
+
+The results of the Bayes factors indicates essentially what was learned from the *t*-tests, which is namely that it is challenging to determine whether a total score of 47 is more consistent with AUD or ACRI. The amount of support for belonging to either the AUD or ACRI populations with this score is effectively equivalent given the 0.92 result, though if one wanted to know the evidence for ACRI over AUD, then this can simply be inverted: $BF_{AUD:ACRI} = 0.92 \therefore BF_{ACRI:AUD} = 0.92^{-1} = 1.09$. Recall, however, that the Bayes factor can be multiplied by the probabilities of the models/hypotheses to begin with, meaning that if there is additional information that makes one diagnosis more likely before ever looking at the data, then this can be included in its estimation. For example, say that a client's history gives them a 60% pre-test probability of having ACRI and subsequently a 40% probability of AUD. This base rate or pre-test probability can be used in the Bayes factor as follows:
+
+```{r, echo = TRUE}
+
+#compute BF of ACRI (60%) vs AUD (40%)
+bf_ACRIvsAUD <- dlst(x = 47, mu = 41.6, sigma = 10.8, n = 147) / dlst(x = 47, mu = 52.1, sigma = 12, n = 43) * 0.60 / 0.40
+bf_ACRIvsAUD
+
+```
+
+The fact that there was a slightly higher probability of the ACRI diagnosis means that the Bayes factor adjusts the evidence accordingly. As a result, the Bayes factor with this prior information reflects slightly strong evidence favoring the diagnosis of ACRI after observing the CVLT performance. One final advantage of the Bayes factor is that it can be interpreted as the posterior (or post-test) odds for a diagnosis and can be transformed to the probability scale. Using the relationship $odds = \frac{p}{1-p}$, the Bayes factor just computed can be converted to the post-test probability as follows:
+
+```{r, echo = TRUE}
+
+#convert BF to post-test probability
+bf_ACRIvsAUD / (1 + bf_ACRIvsAUD)
+
+```
+
+The result shows that the probability of having ACRI changes from 60% to 66% with the CVLT score, which is a valuable quantification of information for clinicians. The ability to convert a Bayes factor to post-test probability and utilize probability to rescale evidence is critical to the value of Bayesian methods. Observing a datum and then adjusting beliefs about the value of the parameter is known as Bayesian updating, and this means that clinicians can change from focusing on whether a total score is consistent with one diagnosis or another to whether the series of scores that someone produces are consistent with a diagnosis or not. To illustrate, rather than focusing on a raw score of 47 words recall, consider the case where the individual recalled 6, 8, 11, 10, and then 12 words over the five trials.
+
+```{r, echo = TRUE}
+
+#compute BF and post-test probability of ACRI vs AUD at Trial 1
+bf_trial1 <- dlst(x = 6, mu = 5.6, sigma = 2.0, n = 147) / dlst(x = 6, mu = 7.2, sigma = 2.4, n = 43)
+pp_trial1 <- bf_trial1 / (1 + bf_trial1)
+
+#compute BF and post-test probability of ACRI vs AUD at Trial 2
+bf_trial2 <- dlst(x = 8, mu = 7.8, sigma = 2.3, n = 147) / dlst(x = 8, mu = 9.7, sigma = 2.9, n = 43) * (pp_trial1 / (1 - pp_trial1))
+pp_trial2 <- bf_trial2 / (1 + bf_trial2)
+
+#compute BF and post-test probability of ACRI vs AUD at Trial 3
+bf_trial3 <- dlst(x = 11, mu = 8.8, sigma = 2.5, n = 147) / dlst(x = 11, mu = 11.5, sigma = 2.9, n = 43) * (pp_trial2 / (1 - pp_trial2))
+pp_trial3 <- bf_trial3 / (1 + bf_trial3)
+
+#compute BF and post-test probability of ACRI vs AUD at Trial 4
+bf_trial4 <- dlst(x = 10, mu = 9.4, sigma = 2.7, n = 147) / dlst(x = 10, mu = 11.6, sigma = 3.0, n = 43) * (pp_trial3 / (1 - pp_trial3))
+pp_trial4 <- bf_trial4 / (1 + bf_trial4)
+
+#compute BF and post-test probability of ACRI vs AUD at Trial 5
+bf_trial5 <- dlst(x = 12, mu = 9.9, sigma = 3.0, n = 147) / dlst(x = 12, mu = 12.3, sigma = 2.8, n = 43) * (pp_trial4 / (1 - pp_trial4))
+pp_trial5 <- bf_trial5 / (1 + bf_trial5)
+
+#final post-test probability of ACRI
+pp_trial5
+
+#compare to post-test probability of ACRI when using raw score
+(bf_AUDvsACRI^-1) / (1 + bf_AUDvsACRI^-1)
+
+```
+
+As shown above, by evaluating evidence over multiple trials, the confidence in the final diagnosis is improved, going from a post-test probability of about 0.52 to 0.61. This is an important observation since the total score used for the first calculation is the same total score obtained from the sequence of trial-level scores used here. Rather than simplifying the information about a person's test performance to a single score, Bayesian analyses give clinicians a simple way of aggregating information obtained after each trial, which uses more information and can help to lead to better diagnoses.
+
+With a well-fitting model, these same steps can be taken to make predictions about what group an individual may belong to while accounting for other factors in the model. Thus far, the examples used have assumed that the raw scores are continuous variables and are sensibly represented by the *t*-distribution. Returning to the binomial distribution, a generalized linear regression permits this regression-based model while giving a discrete probability mass from which these Bayes factors can be computed. Just as with the example of the raw scores and obtaining a Bayes factor from trial-by-trial data, the first-order transfer function applied to a binomial regression will permit an estimation of the learning at each trial and the parameters to describe how the learning curve is shaped.
+
+## Modeling Results
+
+There were many more model results than are appropriate to report in the study, so the aim of this section is to provide these additional details about the modeling steps and results. To begin, it is important to note the priors used for the models. This is most easily illustrated with the first model that was run, which was the Gaussian model. Recall that there are three parameters for the first-order transfer function, and for the purposes of this study, we labeled these parameters verbal attention, maximal learning, and learning rate. A prior distribution provides information about what should be considered the most probable values of parameters before observing the data. Specification of the prior for verbal attention (VA) is straight forward as the expected attention span for is 7 $\pm$ 2, so the prior VA \~ *N*(7, 1.5) reflects the belief that there is a 95% probability, before knowing anything about the data, that the performance on Trial 1 is between 4 and 10 words, which is slight more generous . Maximal learning (ML) is also relatively straight forward to specify since there are 16 words on the CVLT, so a prior of ML \~ *N*(14, 1.5) reflects the belief that people will tend, on average to obtain about 14 words by the final trial but that there's a 95% probability that they learn between 11 and 17 (reflecting the possibility that the Gaussian model will predict scores outside of the possible range -- essentially reflecting someone who could learn more than the number of words on the CVLT). The learning rate (LR) parameter is harder to intuitively define because of its exponential form. Where the previous parameters had sensible starting places, the only thing that is likely for the LR parameter is that it would be expected to be fairly small. A weakly informative prior is thus most appropriate for this parameter, but this was further confounded by the fact that the sign of the parameter must be negative. To address this, the parameter was estimated on the log-scale, which forces the value to be positive, and then multiplied by negative one to ensure that the sign was always negative. A prior of LR \~ *N*(-1, 2) was specified as the weakly informative prior.
+
+In order to estimate the generalized linear models, the first-order transfer function needs to be estimated on the log-odds scale. This arises because the logit link function was used to convert the linear component of the regression to the likelihood function. Framed slightly differently, the logit link converts a linear estimate that can range from $-\infty$ to $+\infty$ to a probability on the range from 0 to 1. This probability is specified to be the probability of successfully recalling a word on the CVLT. When this probability is high, the model expects that the individual learns more words and vice versa. With this in mind, the same priors as were used for the Gaussian model can be applied to the binomial model so long as the prior values are also appropriately transformed to the logit scale. Therefore, the same priors as were used for the Gaussian model were used for the binomial model but with the appropriate logit transformation to be appropriately scaled.
+
+### Posterior Predictive Checks
+
+The posterior predictive check is an important component of Bayesian model checking as it allows the user to evaluate the extent to which the model makes sensible predictions. To illustrate this concept, consider the posterior predictive check for the distribution of words recalled collapsed across all trials for the Gaussian model.
+
+```{r, echo = FALSE}
+dat_cvlt %>%
+  add_predicted_draws(Int_norm_cvlt) %>%
+  ggplot(aes(x = Trial, y = Recall)) +
+  stat_lineribbon(aes(y = .prediction), point_interval = "mean_hdi", .width = c(.99, .95, .8, .5), alpha = 0.25) +
+  stat_summary(aes(y = .prediction), fun = min, geom = "point", size = 2, shape = 6) +
+  stat_summary(aes(y = .prediction), fun = max, geom = "point", size = 2, shape = 2) +
+  stat_dotsinterval(data = dat_cvlt, point_interval = "mean_qi", .width = c(0.50, 0.95), position = "dodge", scale = 0.90, slab_fill = "black", slab_color = "black") +
+  scale_fill_brewer(palette = "Set2") +
+  geom_hline(yintercept = -0.25, linetype = 2) +
+  geom_hline(yintercept = 16.25, linetype = 2) +
+  scale_x_continuous(breaks = c(0, 1, 2, 3, 4), labels = c("1", "2", "3", "4", "5"), limits = c(0, 5)) +
+  scale_y_continuous(breaks = seq(-8, 26, 2), limits = c(-8, 26)) +
+  guides(fill = guide_legend(title = "Credible Interval Levels\n")) +
+  labs(
+    x = "Trial Number",
+    y = "Words Recalled",
+    title = "Model Predictions with a Normal Likelihood"
+  ) +
+  theme_classic() +
+  theme(
+    axis.text = element_text(family = "sans", face = "bold", size = 12),
+    axis.title = element_text(family = "sans", face = "bold", size = 14),
+    plot.title = element_text(family = "sans", face = "bold", size = 18, hjust = 0.5),
+    legend.position = "bottom"
+  )
+```
+
+This plot provides a representation of the model's posterior predictions against the observed data split by each of the 5 trials of the CVLT. The colored bands represent the posterior prediction intervals at varying levels of credibility: 99%, 95%, 80%, and 50%, specifically. The observed data are represented as dots, allowing viewers to see the overall distribution of data. Summarization of these data is provided at the "base" (left-most side of the dot-based bar plots) with the black dot and bars of varying width. The black dot is the mean of the observed sample data. The thicker black bar around this dot covers the middle 50% of the observed data while the thinner black bar covers the range over which 95% of the observed data fell within. The closer to which the posterior predictive intervals align with these empirical summaries of the data, the better the model can be seen as representing the data generation process; therefore, a model where the 50% prediction interval (light red colored band) begins and ends at the same range of scores that the thicker black line of the data's 50% interval includes. Similarly, the 95% prediction interval (light orange colored band) should line up with the full range of the the thin black line corresponding to the data's 95% observed interval. A lighter gray line is also plotted connecting each of the five trials together, and this line represents the average value of the posterior predictions, meaning that it should ideally intersect each of the large black dots representing the sample's average score on each trial.
+
+The plot for the Gaussian posterior distribution shown above illustrates some of the issues that arise from assuming a continuous variable. The dashed lines correspond to the actual upper and lower bounds obtainable from the CVLT. For Trials 4 and 5, the 99% prediction interval (green band) extends beyond the maximum possible score obtainable. The triangles on the plot correspond to the largest and smallest predicted values, which shows that even at the first trial the model predicts impossibly large and small scores.
+
+The posterior predictive check for this model also illustrates that the continuous nature of the Gaussian likelihood introduces some of the mis-estimation of the true data distribution. This can be seen most clearly in the fact that the empirical data quantiles often fall within their corresponding prediction intervals. If the model were treating the scores on the CVLT as count data, then these intervals should most closely align with the empirical data since it currently seems that the normal likelihood is permitting the prediction intervals to span over some range of decimal values that cannot actually be observed on the test.
+
+This can be compared to the posterior plot of the same model but fit with a binomial likelihood as shown in the following figure:
+
+```{r, echo = FALSE}
+dat_cvlt %>%
+  add_predicted_draws(Int_bin_cvlt) %>%
+  ggplot(aes(x = Trial, y = Recall)) +
+  stat_lineribbon(aes(y = .prediction), .width = c(.99, .95, .8, .5), alpha = 0.25) +
+  stat_dotsinterval(data = dat_cvlt, .width = c(0.50, 0.95), position = "dodge", scale = 0.90, slab_fill = "black", slab_color = "black") +
+  scale_fill_brewer(palette = "Set2") +
+  scale_x_continuous(breaks = c(0, 1, 2, 3, 4), labels = c("1", "2", "3", "4", "5"), limits = c(0, 5)) +
+  scale_y_continuous(breaks = seq(-2, 18, 2), limits = c(-2, 18)) +
+  guides(fill = guide_legend(title = "Credible Interval Levels\n")) +
+  labs(
+    x = "Trial Number",
+    y = "Words Recalled",
+    title = "Model Predictions with a Binomial Likelihood"
+  ) +
+  theme_classic() +
+  theme(
+    axis.text = element_text(family = "sans", face = "bold", size = 12),
+    axis.title = element_text(family = "sans", face = "bold", size = 14),
+    plot.title = element_text(family = "sans", face = "bold", size = 18, hjust = 0.5),
+    legend.position = "bottom"
+  )
+```
+
+Though not perfect, the predicted intervals of the binomial distribution are generally more consistent with the observed data. The model results also highlight the desired behavior of the binomial distribution in that predictions are made only between the interval of 0 and 16, which are obtainable scores on the actual trials. As noted before, however, the binomial likelihood does make the assumption that the probability of success on each attempt is the same, so the next posterior predictive plot shows the same check but with the more flexible beta-binomial distribution.
+
+```{r, echo = FALSE}
+dat_cvlt %>%
+  add_predicted_draws(Int_bbi_cvlt) %>%
+  ggplot(aes(x = Trial, y = Recall)) +
+  stat_lineribbon(aes(y = .prediction), .width = c(.99, .95, .8, .5), alpha = 0.25) +
+  stat_dotsinterval(data = dat_cvlt, .width = c(0.50, 0.95), position = "dodge", scale = 0.90, slab_fill = "black", slab_color = "black") +
+  scale_fill_brewer(palette = "Set2") +
+  scale_x_continuous(breaks = c(0, 1, 2, 3, 4), labels = c("1", "2", "3", "4", "5"), limits = c(0, 5)) +
+  scale_y_continuous(breaks = seq(-2, 18, 2), limits = c(-2, 18)) +
+  guides(fill = guide_legend(title = "Credible Interval Levels\n")) +
+  labs(
+    x = "Trial Number",
+    y = "Words Recalled",
+    title = "Model Predictions with a Beta-Binomial Likelihood"
+  ) +
+  theme_classic() +
+  theme(
+    axis.text = element_text(family = "sans", face = "bold", size = 12),
+    axis.title = element_text(family = "sans", face = "bold", size = 14),
+    plot.title = element_text(family = "sans", face = "bold", size = 18, hjust = 0.5),
+    legend.position = "bottom"
+  )
+```
+
+### Model Comparisons
+
+The similarity of the posterior plots for the binomial and beta-binomial likelihood models merits formal model comparison to determine whether the extra flexibility of the beta-binomial provides any additional information that improves the model performance. This can be done through the comparison of information criteria as in other types of models. Specifically, the leave-one-out information criteria (LOOIC) will be used for model comparisons. This information criterion approximates the results that would be obtained from iteratively fitting the model after dropping one different case each time. With the fitted model on this *n* - 1 dataset, the predicted value for the omitted observation can be compared to its actual value and used to compute the LOOIC (among other statistics). This leave-one-out approach weights model evaluation by its ability to predict out-of-sample observations, which therefore penalizes models that are overfit to the sample from which they are derived. The comparison of the LOOIC for the binomial (`Int_bin_cvlt`) and beta-binomial (`Int_bbi_cvlt`) models are provided below:
+
+```{r}
+loo_compare(Int_bin_cvlt, Int_bbi_cvlt)
+```
+
+The results of the `brms::loo_compare()` function provide the best fitting model at the top (i.e., the model with the smallest LOOIC), and the table lists the values of the LOOIC in terms of relative difference from the best fitting model. This means that the difference between the LOOIC for the beta-binomial model is 4.2 units larger than for the binomial model. The scale of information criteria is arbitrary, so this difference can be challenging to understand. Fortunately, the standard error of the posterior difference in LOOIC values is also provided in the table. If one were to scale the difference of 4.2 units relative to this standard error, then the difference in LOOIC between to the models is equivalent to *z* = 10.5, which is a large difference in favor of the simpler binomial model.
+
+Comparing the normal and binomial likelihoods does not make sense as the two models make different predictions regarding the nature of the outcome variable. The difference in these two models can be thought of in terms of the quantification of residuals in a traditional linear regression versus the calculation of deviance in a logistic regression. Because the scale at which predictions and observations are permitted to differ between the two models, a comparison of their predictive accuracy is inappropriate.
+
+### Model Results
+
+The model comparisons supported the use of the binomial distribution as the base distribution for the remainder of the study. The model so far has assumed that there is merely a population average around which each individual is able permitted to deviate from by some amount for each of the three learning parameters. This model can easily be extended by including other population-level effects just as one would do with any other regression. The diagnosis, age, educational attainment, and sex of participants were added as fixed effects such that rather than fitting a universal population average, the conditional average based on these explanatory factors could be fit. This means that the person-level random intercepts now correspond to the extent to which participants deviate from the expected average given their diagnosis, age, education, and sex instead of their deviation from the global population average. The model results are given below:
+
+```{r}
+summary(DxR_bin_cvlt)
+```
+
+The parameter names `Vspn`, `Vmax`, and `Vlrn` correspond to the verbal attention span, maximal learning, and learning rate parameters, respectively. The variable `Dx` has three levels: AUD (alcohol-use disorder), ACI (alcohol-related cognitive impairment), and KS (Korsakoff's syndrome). The education variable (`Edu`) has been coded with a step step contrast such that the interpretation of each coefficient is the increase in log-odds for successfully answering questions when increasing from the previous level of education. So, the coefficient estimated as `Vspn_Edu6yvs<6y` corresponds to predicted increase in log-odds for someone who has obtained 6 years of school compared to someone who has completed less than this (which is the reference level). The factor `Sex` had two levels with male being the reference level. Finally, the `age` variable was standardized to have a mean of zero and standard deviation of one.
+
+The table includes some diagnostics regarding the the adequacy of the posterior sampling. The value of $\hat{R}$ should be no larger than 1.015 (strict threshold, though a more conservative threshold is 1.05). The effective sample size (ESS) should be at least 400 for each parameter estimated. Smaller values, particularly those much smaller than 400, reflect that the quality of estimation of summary statistics describing the posterior distribution for that variable may lack adequate precision.
+
+The table also provides the point estimate, standard error, and 95% credible interval bounds for the parameters. The 95% credible interval reflects the range of values with which there is a 95% probability that the parameter's true value is within. Additional simple descriptions of the posterior distribution can be obtained from the `bayestestR::describe_posterior()` function. Of specific interest in this case are the summaries of the posterior means, maximum *a posteriori* value (MAP), 90% highest density credible interval, probability of the MAP value (p_map), probability of direction (*pd*), and region of practical equivalence (ROPE). The mean and 90% credible interval should be familiar metrics. The *p*(MAP) statistic is the probability of the parameter value being zero divided by the probability of the parameter value being what the modal value of the posterior distribution is, which gives it an interpretation as a kind of Bayesian *p*-value reflecting evidence against a null effect. The *pd* is the proportion of the posterior distribution with the same sign as its median, and this specific probability value is closely related to the traditional *p*-value such *pd* $\ge$ 0.975 corresponds to the two-tailed *p* $\le$ 0.05 result. The ROPE is specifies a range of values that are associated with being practically or effectively the same as observing no effect. In this case, because the logit link function is being used, the negligible effect of Cohen's *d* = 0.10 was logit scaled to give the ROPE = $\pm$0.18. Since the posterior is a full distribution, it is possible to compute the approximate percentage of the posterior values for the parameters that fall within the ROPE. These descriptions are shown for the model below:
+
+```{r}
+describe_posterior(as_draws_df(DxR_bin_cvlt, variable = "^b_", regex = TRUE), centrality = c("mean", "MAP"), ci = 0.90, ci_method = "hdi", test = c("pd", "p_map", "rope"), rope_range = c(-0.18, 0.18), rope_ci = 0.90)
+```
+
+To illustrate the interpretation of these results, consider the description obtained for the `b_Vspn_DxKS`. This is the regression coefficient (`b_` prefix deriving from the notation of $\beta_x$) for being diagnosed with Korsakoff's syndrome (`DxKS`) when predicting verbal attention/attention span (`Vspn`). The posterior distribution is mostly symmetric with a very minimal negative skew (mean = -0.93 < mode = -0.90), and there is at least a less than 10% probability that the value of this effect could be zero (i.e., zero is not within the 90% credible interval). Further supporting the unlikeliness of this effect being null is the *p*(MAP) < .001 result, which indicates that the probability of the effect being zero is considerably lower than the probability of the effect being the modal value (MAP = -0.90). Additionally, 100% of the sampled posterior distribution shares the same sign as the median (i.e., the entire posterior distribution is negative and was not observed to ever cross zero). While all of these results provide support for the existence of an effect, the question remains whether this effect's magnitude is of relevance. In this case, there is no proportion of the posterior distribution that falls within the ROPE, meaning that the most probable values for this parameter to take are all at least greater in magnitude than what was defined to be a negligible effect. 
+
+Another valuable part of the multilevel model is the ability to estimate the correlation between the random effects. In this case, it is possible to examine the correlations between verbal attention, maximal learning, and learning rate for the overall sample. For this, the ROPE will be defined as -0.22 < *r* < 0.22, which corresponds to a correlation whose square is <5% of the variance in the variables explained by their covariance.
+
+```{r}
+#save output
+cor_dxr <- describe_posterior(as_draws_df(DxR_bin_cvlt, variable = "^cor_", regex = TRUE), centrality = c("mean", "MAP"), dispersion = TRUE, ci = 0.90, ci_method = "hdi", test = c("pd", "p_map", "rope"), rope_range = c(-0.22, 0.22), rope_ci = 0.90)
+
+#rename parameters to cleaner names
+cor_dxr$Parameter <- c("cor_Vspan_Vmax", "cor_Vspn_Vlrn", "cor_Vmax_Vlrn")
+
+#print table
+cor_dxr
+```
+
+The results illustrate that there is strong, positive correlation between verbal attention span and maximal learning that is a robust effect. A moderate, positive correlation is observed between attention span and the learning rate, though there is some probability that this effect could be negligible. There is weak evidence for negligible to minimal correlation between maximal learning and learning rate. These correlations can be understood in perhaps better depth if the random effects were permitted to correlate only within diagnoses. The final model as reported in the study is one in which the parameters are estimated uniquely for each diagnostic group. These correlations are shown here:
+
+```{r}
+#save output
+cor_rnd <- describe_posterior(as_draws_df(DxR_rnd_cvlt, variable = "^cor_", regex = TRUE), centrality = c("mean", "MAP"), dispersion = TRUE, ci = 0.90, ci_method = "hdi", test = c("pd", "p_map", "rope"), rope_range = c(-0.22, 0.22), rope_ci = 0.90)
+
+#rename parameters to cleaner names
+cor_rnd$Parameter <- paste0(rep(c("AUD_", "ACI_", "KS_"), each = 3), c("Vspn_Vmax", "Vspn_Vlrn", "Vmax_Vlrn"))
+
+#print table
+cor_rnd
+```
+
+In the full sample, it seems that the correlation between attention span and maximal learning was driven primarily by the ACRI group, though a moderately strong correlation still exists for the AUD and KS groups. Though this correlation is the only one that has robust evidence of existing at a non-negligible magnitude, it is also interesting to observe that the ACRI group produces a much lower correlation between attention span and learning rate than the KS group. This finding would suggest that improvement in scores over time in the KS group, but not the ACRI (and likely not the AUD) group, draws on attentional span, suggesting that individuals with KS and impaired working memory/attention would be least likely to demonstrate any improvement over trials. While interesting, it is worth also emphasizing that this correlation is relatively weak and lacks strong evidence in favor of its existence, which likely reflects a fair amount of variability in the performances of individuals with KS. This variability can be observed by extracting the standard deviation estimates of the random effects by diagnosis:
+
+```{r}
+#save output
+sd_rnd <- describe_posterior(as_draws_df(DxR_rnd_cvlt, variable = "^sd_", regex = TRUE), centrality = c("mean", "MAP"), dispersion = TRUE, ci = 0.90, ci_method = "hdi", test = NULL)
+
+#rename parameters to cleaner names
+sd_rnd$Parameter <- paste0(rep(c("AUD_", "ACI_", "KS_"), each = 3), c("sd_Vspn", "sd_Vmax", "sd_Vlrn"))
+
+#print table
+sd_rnd
+```
+
+As illustrated from above, the random effects of individuals with Korsakoff's syndrome for the learning rate parameter had one of the largest standard deviations overall. On average, individuals in the KS group differed from one another by about 1.00 units in their individual deviations from the population average. The only other variable with larger variability was the maximal learning among those with AUD. In comparison, the variability in learning rates for the other two diagnostic groups is also much less than was observed for the KS group, further suggesting that there is something unique about this diagnosis and the learning rate parameter.
+
+### Model Predictions
+
+With the model results now illustrated, the final point to make with this supplemental material is the prediction of these models. To begin, it is useful to examine the predicted performances of the three diagnostic groups over the trials. In order to make sure that these distributions are comparable between the three groups, conditional predictions are provided. So, the distributions of expected scores shown in the figure below are computed while varying only diagnosis and holding constant everything else. Since age is continuous and already standardized, it was held constant at the sample mean (i.e., *z* = 0). The categorical variables of education and sex were held constant at the most frequently observed category in the sample. Using these values, the only differences in predicted scores should be due to the diagnostic group.
+
+```{r}
+wrap_elements(panel = ((p1 + p2 + p3 + p4 + p5) & xlab(NULL) & theme(plot.margin = margin(2, 1, 2, 1))) + plot_layout(nrow = 1)) +
+  labs(tag = "Words Recalled") +
+  theme(
+    plot.tag = element_text(size = 12, family = "sans", face = "bold"),
+    plot.tag.position = "bottom"
+)
+```
+
+These plots illustrate the incomplete separation of the three groups on the whole, but there is a clear pattern in which one would expect, if given no other information than three different scores, then the ordering of those scores from lowest to highest should correspond to the groups KS < ACI < AUD. This information now returns to the initial problem of determining, based on a set of scores from the CVLT, what diagnosis is most likely for a person. In this case, it is possible to extract person-specific predictions about what diagnosis is most probable. To illustrate, consider one of the participants' data. This participant will be assigned a different ID so that the model must generate predictions for the descriptive data as though it was a new individual. The participant is male with 6 years of education and whose standardized age is *z* = -0.552. Their performance on the CVLT was the following: 6, 6, 10, 11, 14. Say that the question, based on history, is whether this individual is most likely to belong to the AUD or ACI sample. The following code creates a mock data set in which the model generates posterior predictions assuming that the individual's diagnosis is AUD and then does the same while assuming that the individual has ACI. Just as before, once these two posteriors are obtained, a Bayes factor can be computed to determine what the post-test probabilities of either diagnosis is. The code to generate the hypothetical distributions is shown here:
+
+```{r}
+#create data frame corresponding to the assumption that the individual has AUC
+dat_aud <- data.frame(
+  ID = rep(999999, 5),
+  Sex = rep("Male", 5),
+  Age = rep(-0.552, 5),
+  Edu = rep("6y", 5),
+  Dx = rep("AUD", 5),
+  AUD = rep(1, 5),
+  ACI = rep(0, 5),
+  KS = rep(0, 5),
+  Trial = 0:4,
+  Recall = c(6, 6, 10, 11, 14)
+) 
+
+#add posterior predictions to the data
+dat_aud <- dat_aud %>%
+  add_predicted_draws(object = DxR_rnd_cvlt, newdata = dat_aud, allow_new_levels = TRUE, sample_new_levels = "gaussian")
+
+#create another data frame now assuming that the individual has ACI
+dat_aci <- data.frame(
+  ID = rep(999999, 5),
+  Sex = rep("Male", 5),
+  Age = rep(-0.552, 5),
+  Edu = rep("6y", 5),
+  Dx = rep("ACI", 5),   #changed from AUD
+  AUD = rep(0, 5),      #changed from 1
+  ACI = rep(1, 5),      #changed from 0
+  KS = rep(0, 5),
+  Trial = 0:4,
+  Recall = c(6, 6, 10, 11, 14)
+)
+
+#add posterior predictions to the data
+dat_aci <- dat_aci %>%
+  add_predicted_draws(object = DxR_rnd_cvlt, newdata = dat_aci, allow_new_levels = TRUE, sample_new_levels = "gaussian")
+
+#compute probabilities of scores by trials for the AUD predictions
+p_t1_aud <- mean(dat_aud[dat_aud$Trial == 0, ".prediction"] == dat_aud[dat_aud$Trial == 0, "Recall"])
+p_t2_aud <- mean(dat_aud[dat_aud$Trial == 1, ".prediction"] == dat_aud[dat_aud$Trial == 1, "Recall"])
+p_t3_aud <- mean(dat_aud[dat_aud$Trial == 2, ".prediction"] == dat_aud[dat_aud$Trial == 2, "Recall"])
+p_t4_aud <- mean(dat_aud[dat_aud$Trial == 3, ".prediction"] == dat_aud[dat_aud$Trial == 3, "Recall"])
+p_t5_aud <- mean(dat_aud[dat_aud$Trial == 4, ".prediction"] == dat_aud[dat_aud$Trial == 4, "Recall"])
+
+#compute probabilities of scores by trials for the ACI predictions
+p_t1_aci <- mean(dat_aci[dat_aci$Trial == 0, ".prediction"] == dat_aci[dat_aci$Trial == 0, "Recall"])
+p_t2_aci <- mean(dat_aci[dat_aci$Trial == 1, ".prediction"] == dat_aci[dat_aci$Trial == 1, "Recall"])
+p_t3_aci <- mean(dat_aci[dat_aci$Trial == 2, ".prediction"] == dat_aci[dat_aci$Trial == 2, "Recall"])
+p_t4_aci <- mean(dat_aci[dat_aci$Trial == 3, ".prediction"] == dat_aci[dat_aci$Trial == 3, "Recall"])
+p_t5_aci <- mean(dat_aci[dat_aci$Trial == 4, ".prediction"] == dat_aci[dat_aci$Trial == 4, "Recall"])
+
+#compute BF for AUD to ACI over trials
+bf_t1 <- p_t1_aud / p_t1_aci
+p_t1  <- bf_t1 / ( 1 + bf_t1 )
+
+bf_t2 <- ( p_t2_aud / p_t2_aci ) * ( p_t1 / (1 - p_t1) )
+p_t2  <- bf_t2 / ( 1 + bf_t2 )
+
+bf_t3 <- ( p_t3_aud / p_t3_aci ) * ( p_t2 / (1 - p_t2) )
+p_t3  <- bf_t3 / ( 1 + bf_t3 )
+
+bf_t4 <- ( p_t4_aud / p_t4_aci ) * ( p_t3 / (1 - p_t3) )
+p_t4  <- bf_t4 / ( 1 + bf_t4 )
+
+bf_t5 <- ( p_t5_aud / p_t5_aci ) * ( p_t4 / (1 - p_t4) )
+p_t5  <- bf_t5 / ( 1 + bf_t5 )
+
+#final post-test probability for having AUD
+cat(paste0("BF of AUD:ACI = ", round(bf_t5, 4), "\nProbability of AUD = ", round(p_t5, 4)))
+```
+
+The conclusion, therefore, would be that the evidence is fair to conclude that the individual is likely to have AUD, though this is also assuming that the clinician was assuming *a priori* that there was a 50-50 probability of the individual having either AUD or ACI which is unlikely. Regardless, the most conservative diagnosis that one would make is that of AUD if the ~0.30 probability of misdiagnosis is acceptable to the clinician. It is important to note that this diagnostic probability is customized to the new individual. Put another way, the model is used to generate specific predictions for this individual by drawing on what was learned from the complete sample. The estimation of a pooled sample model with Bayesian methods to incorporate uncertainty allow for the inference on and prediction of observations at an individual-level for yet-to-be-observed data. In short, the methods and results of this study are rooted in several important extensions of the existing literature, and it is believed that these extensions are most likely to be valued by clinicians as they support direct translation of research findings to clinical problems. At the same time, the modifications to the model only minimally change the overall implications of the first-order transfer function, meaning that much of the same research implications as applied to the previous implementations of these models would also extend to the current approach.
