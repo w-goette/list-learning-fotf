@@ -6,7 +6,7 @@ description: |
   Additional documentation for the manuscript: "Measuring Episodic Verbal Learning Ability in Alcohol-Related Cognitive Disorders in Relation to Everyday Functioning".
 date: 05/15/2023
 author:
-  - name: Wellem S. Eikelboom
+  - name: Willem S. Eikelboom
     affiliations:
       - id: VVGI
         name: Vincent van Gogh Institute for Psychiatry
@@ -385,7 +385,7 @@ The model comparisons supported the use of the binomial distribution as the base
 summary(DxR_bin_cvlt)
 ```
 
-The parameter names `Vspn`, `Vmax`, and `Vlrn` correspond to the verbal attention span, maximal learning, and learning rate parameters, respectively. The variable `Dx` has three levels: AUD (alcohol-use disorder), ACI (alcohol-related cognitive impairment), and KS (Korsakoff's syndrome). The education variable (`Edu`) has been coded with a step step contrast such that the interpretation of each coefficient is the increase in log-odds for successfully answering questions when increasing from the previous level of education. So, the coefficient estimated as `Vspn_Edu6yvs<6y` corresponds to predicted increase in log-odds for someone who has obtained 6 years of school compared to someone who has completed less than this (which is the reference level). The factor `Sex` had two levels with male being the reference level. Finally, the `age` variable was standardized to have a mean of zero and standard deviation of one.
+The parameter names `Vspn`, `Vmax`, and `Vlrn` correspond to the verbal attention span, maximal learning, and learning rate parameters, respectively. The variable `Dx` has three levels: AUD (alcohol-use disorder), ARCI (alcohol-related cognitive impairment), and KS (Korsakoff's syndrome). The education variable (`Edu`) has been coded with a step step contrast such that the interpretation of each coefficient is the increase in log-odds for successfully answering questions when increasing from the previous level of education. So, the coefficient estimated as `Vspn_Edu6yvs<6y` corresponds to predicted increase in log-odds for someone who has obtained 6 years of school compared to someone who has completed less than this (which is the reference level). The factor `Sex` had two levels with male being the reference level. Finally, the `age` variable was standardized to have a mean of zero and standard deviation of one.
 
 The table includes some diagnostics regarding the the adequacy of the posterior sampling. The value of $\hat{R}$ should be no larger than 1.015 (strict threshold, though a more conservative threshold is 1.05). The effective sample size (ESS) should be at least 400 for each parameter estimated. Smaller values, particularly those much smaller than 400, reflect that the quality of estimation of summary statistics describing the posterior distribution for that variable may lack adequate precision.
 
@@ -417,7 +417,7 @@ The results illustrate that there is strong, positive correlation between verbal
 cor_rnd <- describe_posterior(as_draws_df(DxR_rnd_cvlt, variable = "^cor_", regex = TRUE), centrality = c("mean", "MAP"), dispersion = TRUE, ci = 0.90, ci_method = "hdi", test = c("pd", "p_map", "rope"), rope_range = c(-0.22, 0.22), rope_ci = 0.90)
 
 #rename parameters to cleaner names
-cor_rnd$Parameter <- paste0(rep(c("AUD_", "ACI_", "KS_"), each = 3), c("Vspn_Vmax", "Vspn_Vlrn", "Vmax_Vlrn"))
+cor_rnd$Parameter <- paste0(rep(c("AUD_", "ARCI_", "KS_"), each = 3), c("Vspn_Vmax", "Vspn_Vlrn", "Vmax_Vlrn"))
 
 #print table
 cor_rnd
@@ -430,7 +430,7 @@ In the full sample, it seems that the correlation between attention span and max
 sd_rnd <- describe_posterior(as_draws_df(DxR_rnd_cvlt, variable = "^sd_", regex = TRUE), centrality = c("mean", "MAP"), dispersion = TRUE, ci = 0.90, ci_method = "hdi", test = NULL)
 
 #rename parameters to cleaner names
-sd_rnd$Parameter <- paste0(rep(c("AUD_", "ACI_", "KS_"), each = 3), c("sd_Vspn", "sd_Vmax", "sd_Vlrn"))
+sd_rnd$Parameter <- paste0(rep(c("AUD_", "ARCI_", "KS_"), each = 3), c("sd_Vspn", "sd_Vmax", "sd_Vlrn"))
 
 #print table
 sd_rnd
@@ -442,9 +442,11 @@ As illustrated from above, the random effects of individuals with Korsakoff's sy
 
 With the model results now illustrated, the final point to make with this supplemental material is the prediction of these models. To begin, it is useful to examine the predicted performances of the three diagnostic groups over the trials. In order to make sure that these distributions are comparable between the three groups, conditional predictions are provided. So, the distributions of expected scores shown in the figure below are computed while varying only diagnosis and holding constant everything else. Since age is continuous and already standardized, it was held constant at the sample mean (i.e., *z* = 0). The categorical variables of education and sex were held constant at the most frequently observed category in the sample. Using these values, the only differences in predicted scores should be due to the diagnostic group.
 
-![](CVLT_epred.pdf){width="1450" height="500" fit-align="center"}
 
-These plots illustrate the incomplete separation of the three groups on the whole, but there is a clear pattern in which one would expect, if given no other information than three different scores, then the ordering of those scores from lowest to highest should correspond to the groups KS \< ACI \< AUD. This information now returns to the initial problem of determining, based on a set of scores from the CVLT, what diagnosis is most likely for a person. In this case, it is possible to extract person-specific predictions about what diagnosis is most probable. To illustrate, consider one of the participants' data. This participant will be assigned a different ID so that the model must generate predictions for the descriptive data as though it was a new individual. The participant is male with 6 years of education and whose standardized age is *z* = -0.552. Their performance on the CVLT was the following: 6, 6, 10, 11, 14. Say that the question, based on history, is whether this individual is most likely to belong to the AUD or ACI sample. The following code creates a mock data set in which the model generates posterior predictions assuming that the individual's diagnosis is AUD and then does the same while assuming that the individual has ACI. Just as before, once these two posteriors are obtained, a Bayes factor can be computed to determine what the post-test probabilities of either diagnosis is. The code to generate the hypothetical distributions is shown here:
+![Histograms of Plausible Scores on Each Trial by Diagnosis](CVLT_hist_ppc.pdf){width=10in height=5in}
+
+
+These plots illustrate the incomplete separation of the three groups on the whole, but there is a clear pattern in which one would expect, if given no other information than three different scores, then the ordering of those scores from lowest to highest should correspond to the groups KS \< ARCI \< AUD. This information now returns to the initial problem of determining, based on a set of scores from the CVLT, what diagnosis is most likely for a person. In this case, it is possible to extract person-specific predictions about what diagnosis is most probable. To illustrate, consider one of the participants' data. This participant will be assigned a different ID so that the model must generate predictions for the descriptive data as though it was a new individual. The participant is male with 6 years of education and whose standardized age is *z* = -0.552. Their performance on the CVLT was the following: 6, 6, 10, 11, 14. Say that the question, based on history, is whether this individual is most likely to belong to the AUD or ARCI sample. The following code creates a mock data set in which the model generates posterior predictions assuming that the individual's diagnosis is AUD and then does the same while assuming that the individual has ARCI. Just as before, once these two posteriors are obtained, a Bayes factor can be computed to determine what the post-test probabilities of either diagnosis is. The code to generate the hypothetical distributions is shown here:
 
 ```{r}
 #create data frame corresponding to the assumption that the individual has AUC
@@ -455,7 +457,7 @@ dat_aud <- data.frame(
   Edu = rep("6y", 5),
   Dx = rep("AUD", 5),
   AUD = rep(1, 5),
-  ACI = rep(0, 5),
+  ARCI = rep(0, 5),
   KS = rep(0, 5),
   Trial = 0:4,
   Recall = c(6, 6, 10, 11, 14)
@@ -465,23 +467,23 @@ dat_aud <- data.frame(
 dat_aud <- dat_aud %>%
   add_predicted_draws(object = DxR_rnd_cvlt, newdata = dat_aud, allow_new_levels = TRUE, sample_new_levels = "gaussian")
 
-#create another data frame now assuming that the individual has ACI
-dat_aci <- data.frame(
+#create another data frame now assuming that the individual has arci
+dat_arci <- data.frame(
   ID = rep(999999, 5),
   Sex = rep("Male", 5),
   Age = rep(-0.552, 5),
   Edu = rep("6y", 5),
   Dx = rep("ACI", 5),   #changed from AUD
   AUD = rep(0, 5),      #changed from 1
-  ACI = rep(1, 5),      #changed from 0
+  arci = rep(1, 5),      #changed from 0
   KS = rep(0, 5),
   Trial = 0:4,
   Recall = c(6, 6, 10, 11, 14)
 )
 
 #add posterior predictions to the data
-dat_aci <- dat_aci %>%
-  add_predicted_draws(object = DxR_rnd_cvlt, newdata = dat_aci, allow_new_levels = TRUE, sample_new_levels = "gaussian")
+dat_arci <- dat_arci %>%
+  add_predicted_draws(object = DxR_rnd_cvlt, newdata = dat_arci, allow_new_levels = TRUE, sample_new_levels = "gaussian")
 
 #compute probabilities of scores by trials for the AUD predictions
 p_t1_aud <- mean(dat_aud[dat_aud$Trial == 0, ".prediction"] == dat_aud[dat_aud$Trial == 0, "Recall"])
@@ -490,31 +492,31 @@ p_t3_aud <- mean(dat_aud[dat_aud$Trial == 2, ".prediction"] == dat_aud[dat_aud$T
 p_t4_aud <- mean(dat_aud[dat_aud$Trial == 3, ".prediction"] == dat_aud[dat_aud$Trial == 3, "Recall"])
 p_t5_aud <- mean(dat_aud[dat_aud$Trial == 4, ".prediction"] == dat_aud[dat_aud$Trial == 4, "Recall"])
 
-#compute probabilities of scores by trials for the ACI predictions
-p_t1_aci <- mean(dat_aci[dat_aci$Trial == 0, ".prediction"] == dat_aci[dat_aci$Trial == 0, "Recall"])
-p_t2_aci <- mean(dat_aci[dat_aci$Trial == 1, ".prediction"] == dat_aci[dat_aci$Trial == 1, "Recall"])
-p_t3_aci <- mean(dat_aci[dat_aci$Trial == 2, ".prediction"] == dat_aci[dat_aci$Trial == 2, "Recall"])
-p_t4_aci <- mean(dat_aci[dat_aci$Trial == 3, ".prediction"] == dat_aci[dat_aci$Trial == 3, "Recall"])
-p_t5_aci <- mean(dat_aci[dat_aci$Trial == 4, ".prediction"] == dat_aci[dat_aci$Trial == 4, "Recall"])
+#compute probabilities of scores by trials for the arci predictions
+p_t1_arci <- mean(dat_arci[dat_arci$Trial == 0, ".prediction"] == dat_arci[dat_arci$Trial == 0, "Recall"])
+p_t2_arci <- mean(dat_arci[dat_arci$Trial == 1, ".prediction"] == dat_arci[dat_arci$Trial == 1, "Recall"])
+p_t3_arci <- mean(dat_arci[dat_arci$Trial == 2, ".prediction"] == dat_arci[dat_arci$Trial == 2, "Recall"])
+p_t4_arci <- mean(dat_arci[dat_arci$Trial == 3, ".prediction"] == dat_arci[dat_arci$Trial == 3, "Recall"])
+p_t5_arci <- mean(dat_arci[dat_arci$Trial == 4, ".prediction"] == dat_arci[dat_arci$Trial == 4, "Recall"])
 
-#compute BF for AUD to ACI over trials
-bf_t1 <- p_t1_aud / p_t1_aci
+#compute BF for AUD to arci over trials
+bf_t1 <- p_t1_aud / p_t1_arci
 p_t1  <- bf_t1 / ( 1 + bf_t1 )
 
-bf_t2 <- ( p_t2_aud / p_t2_aci ) * ( p_t1 / (1 - p_t1) )
+bf_t2 <- ( p_t2_aud / p_t2_arci ) * ( p_t1 / (1 - p_t1) )
 p_t2  <- bf_t2 / ( 1 + bf_t2 )
 
-bf_t3 <- ( p_t3_aud / p_t3_aci ) * ( p_t2 / (1 - p_t2) )
+bf_t3 <- ( p_t3_aud / p_t3_arci ) * ( p_t2 / (1 - p_t2) )
 p_t3  <- bf_t3 / ( 1 + bf_t3 )
 
-bf_t4 <- ( p_t4_aud / p_t4_aci ) * ( p_t3 / (1 - p_t3) )
+bf_t4 <- ( p_t4_aud / p_t4_arci ) * ( p_t3 / (1 - p_t3) )
 p_t4  <- bf_t4 / ( 1 + bf_t4 )
 
-bf_t5 <- ( p_t5_aud / p_t5_aci ) * ( p_t4 / (1 - p_t4) )
+bf_t5 <- ( p_t5_aud / p_t5_arci ) * ( p_t4 / (1 - p_t4) )
 p_t5  <- bf_t5 / ( 1 + bf_t5 )
 
 #final post-test probability for having AUD
-cat(paste0("BF of AUD:ACI = ", round(bf_t5, 4), "\nProbability of AUD = ", round(p_t5, 4)))
+cat(paste0("BF of AUD:ARCI = ", round(bf_t5, 4), "\nProbability of AUD = ", round(p_t5, 4)))
 ```
 
-The conclusion, therefore, would be that the evidence is fair to conclude that the individual is likely to have AUD, though this is also assuming that the clinician was assuming *a priori* that there was a 50-50 probability of the individual having either AUD or ACI which is unlikely. Regardless, the most conservative diagnosis that one would make is that of AUD if the \~0.30 probability of misdiagnosis is acceptable to the clinician. It is important to note that this diagnostic probability is customized to the new individual. Put another way, the model is used to generate specific predictions for this individual by drawing on what was learned from the complete sample. The estimation of a pooled sample model with Bayesian methods to incorporate uncertainty allow for the inference on and prediction of observations at an individual-level for yet-to-be-observed data. In short, the methods and results of this study are rooted in several important extensions of the existing literature, and it is believed that these extensions are most likely to be valued by clinicians as they support direct translation of research findings to clinical problems. At the same time, the modifications to the model only minimally change the overall implications of the first-order transfer function, meaning that much of the same research implications as applied to the previous implementations of these models would also extend to the current approach.
+The conclusion, therefore, would be that the evidence is fair to conclude that the individual is likely to have AUD, though this is also assuming that the clinician was assuming *a priori* that there was a 50-50 probability of the individual having either AUD or ARCI which is unlikely. Regardless, the most conservative diagnosis that one would make is that of AUD if the \~0.30 probability of misdiagnosis is acceptable to the clinician. It is important to note that this diagnostic probability is customized to the new individual. Put another way, the model is used to generate specific predictions for this individual by drawing on what was learned from the complete sample. The estimation of a pooled sample model with Bayesian methods to incorporate uncertainty allow for the inference on and prediction of observations at an individual-level for yet-to-be-observed data. In short, the methods and results of this study are rooted in several important extensions of the existing literature, and it is believed that these extensions are most likely to be valued by clinicians as they support direct translation of research findings to clinical problems. At the same time, the modifications to the model only minimally change the overall implications of the first-order transfer function, meaning that much of the same research implications as applied to the previous implementations of these models would also extend to the current approach.
